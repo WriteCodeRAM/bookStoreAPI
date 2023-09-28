@@ -20,7 +20,7 @@ def get_db():
 
 
  # Sprint 2 example GET request
-@app.get('/store')
+@app.get('/books')
 def get_books():
     try:
         # connect to the database
