@@ -45,11 +45,11 @@ def get_books():
         result = []
         for row in data:
             result.append({
-                'book_id': row[0], 
-                'title': row[1],  
-                'author': row[2], 
-                'publication_year': row[3],  
-                
+                'book_id': row[0],
+                'title': row[1],
+                'author': row[2],
+                'publication_year': row[3],
+
             })
 
         return jsonify(result)
@@ -152,12 +152,29 @@ def get_comments():
 
 @app.route('/average_rating/<book_id>', methods=['GET'])
 def get_average_rating(book_id):
-    if book_id in ratings:
-        total_ratings = sum([rating['rating'] for rating in ratings[book_id]])
-        average_rating = total_ratings / len(ratings[book_id])
-        return jsonify({"average_rating": average_rating})
-    else:
-        return jsonify({"message": "Book not found"}), 404
+    try:
+        connection = get_db()
+        cursor = connection.cursor()
+
+        # Query to calculate the average rating for the specific book_id
+        query = "SELECT AVG(rating_value) FROM ratings"
+        cursor.execute(query)
+
+        average_rating = cursor.fetchone()[0]
+
+        cursor.close()
+        connection.close()
+
+        if average_rating is not None:
+            return jsonify({"average_rating": average_rating})
+        else:
+            return jsonify({"message": "Book not found"}), 404
+
+    except Exception as e:
+        return jsonify({'error': str(e)})
+
+if __name__ == '__main__':
+    app.run(debug=True)
 
 
 if __name__ == '__main__':
