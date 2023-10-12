@@ -1,101 +1,33 @@
 from flask import Flask, jsonify
 import mysql.connector
+from commentsandratings import get_ratings, get_comments, get_average_rating
+from users import get_users
 
 app = Flask(__name__)
 
 
-db_config = {
-    # user is first name lowercase 
-    'user': 'carlos',
-    'password': 'password',
-    'host': 'test-database.cdlfxfopbica.us-east-2.rds.amazonaws.com',
-    'database': 'testdb',
-    'raise_on_warnings': True
-}
+@app.route('/ratings', methods=['GET'])
+def get_rating():
+    ratings = get_ratings()
+    return ratings
 
 
-# connect to database 
-def get_db():
-    return mysql.connector.connect(**db_config)
+@app.route('/comments', methods=['GET'])
+def get_comment():
+    comments = get_comments()
+    return comments
 
 
- # Sprint 2 example GET request
-@app.route('/store', methods=['GET'])
-def get_books():
-    try:
-        # connect to the database
-        connection = get_db()
-
-        # cursor to interact with the database
-        cursor = connection.cursor()
-
-        # Sprint 2 example GET request
-        query = "SELECT * FROM books"
-        # execute will run the query above
-        cursor.execute(query)
-
-        # get all rows from the result
-        data = cursor.fetchall()
-
-        # close the cursor and connection
-        cursor.close()
-        connection.close()
-
-        # turn the data into a list of objects
-        result = []
-        for row in data:
-            result.append({
-                'book_id': row[0], 
-                'title': row[1],  
-                'author': row[2], 
-                'publication_year': row[3],  
-                
-            })
-
-        return jsonify(result)
-
-    except Exception as e:
-        return jsonify({'error': str(e)})
+@app.route('/average_rating', methods=['GET'])
+def avg_rating():
+    avg_rate = get_average_rating()
+    return avg_rate
 
 
 @app.route('/users', methods=['GET'])
-def get_users():
-    try:
-        # connect to the database
-        connection = get_db()
-
-        # cursor to interact with the database
-        cursor = connection.cursor()
-
-        # Sprint 2 example GET request
-        query = "SELECT * FROM users"
-        # execute will run the query above
-        cursor.execute(query)
-
-        # get all rows from the result
-        data = cursor.fetchall()
-
-        # close the cursor and connection
-        cursor.close()
-        connection.close()
-
-        # turn the data into a list of objects
-        result = []
-        for row in data:
-            result.append({
-                'user_id': row[0],
-                'username': row[1],
-                'password': row[2],
-                'first name': row[3],
-                'last name': row[4],
-                'email': row[5]
-
-            })
-
-        return jsonify(result)
-
-    except Exception as e:
-        return jsonify({'error': str(e)})
+def all_users():
+    users = get_users()
+    return users
 
 
 if __name__ == '__main__':
