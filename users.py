@@ -5,6 +5,7 @@ from database import app, get_db
 
 users = {}
 
+
 @app.route('/users', methods=['GET'])
 def get_users():
     try:
@@ -40,6 +41,46 @@ def get_users():
             })
 
         return jsonify(result)
+
+    except Exception as e:
+        return jsonify({'error': str(e)})
+
+
+@app.route('/users/<username>', methods=['GET'])
+def get_user(username):
+    try:
+        total_users = get_users().json
+        for user in total_users:
+            if username == user["username"]:
+                return jsonify(user)
+        return jsonify({"error": "User not found"})
+
+    except Exception as e:
+        return jsonify({'error': str(e)})
+
+
+@app.route('/users/create', methods=["POST"])
+def create_user():
+    try:
+        user_data = request.get_json()
+        username = user_data["username"]
+        password = user_data["password"]
+        first_name = user_data["first name"]
+        last_name = user_data["last name"]
+        email = user_data["email"]
+
+        connection = get_db()
+        cursor = connection.cursor()
+
+        query = "INSERT INTO users (username, password, first_name, last_name, email) VALUES (%s, %s, %s, %s, %s)"
+        values = (username, password, first_name, last_name, email)
+        cursor.execute(query, values)
+        connection.commit()
+
+        cursor.close()
+        connection.close()
+
+        return jsonify({"message": "User created successfully"})
 
     except Exception as e:
         return jsonify({'error': str(e)})

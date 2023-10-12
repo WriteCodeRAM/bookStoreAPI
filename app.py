@@ -1,7 +1,7 @@
 from flask import Flask, jsonify
 import mysql.connector
 from commentsandratings import get_ratings, get_comments, get_average_rating
-from users import get_users
+from users import get_users, get_user, create_user
 
 app = Flask(__name__)
 
@@ -28,6 +28,15 @@ def avg_rating():
 def all_users():
     users = get_users()
     return users
+
+@app.route('/users/<username>', methods=['GET'])
+def find_user(username):
+    user = get_user(username)
+    return user
+
+@app.route('/users/create', methods=['POST'])
+def new_user():
+    return create_user()
 
 
 if __name__ == '__main__':
