@@ -1,10 +1,5 @@
 from flask import jsonify, request
-import mysql.connector
-
 from database import app, get_db
-
-comments = {}
-ratings = {}
 
 
 @app.route('/comments', methods=['GET'])
@@ -23,11 +18,9 @@ def get_comments():
         result = []
         for row in data:
             result.append({
-                'comment_id': row[0],
-                'user_id': row[1],
-                'book_id': row[2],
-                'comment_text': row[3],
-                'timestamp': row[4],
+                'user_id': row[0],
+                'book_id': row[1],
+                'comment_text': row[2],
             })
 
         return jsonify(result)
@@ -36,18 +29,42 @@ def get_comments():
 
 
 @app.route('/comment', methods=['POST'])
-def comment_books():
-    data = request.get_json()
-    book_id = data['book_id']
-    user_id = data['user_id']
-    comment = data['comment']
-    datestamp = data['datestamp']
+def comment():
 
-    comments.setdefault(book_id, []).append(
-        {'user_id': user_id,
-         'comment': comment,
-         'datestamp': datestamp})
-    return jsonify({"message": "Comment added successfully"}), 201
+    try:
+
+        connection = get_db()
+        cursor = connection.cursor()
+
+        data = request.get_json()
+        user_id = data["user_id"]
+        book_id = data["book_id"]
+        comment_text = data["comment_text"]
+
+        print(data)
+
+        # Insert comment into the database
+        query = """INSERT INTO comments (user_id, book_id, comment_text) 
+        VALUES (%s, %s, %s)"""
+
+        params = (
+            user_id,
+            book_id,
+            comment_text,
+        )
+        cursor.execute(query, params)
+        connection.commit()
+
+        comment_data = {
+            "user_id": user_id,
+            "book_id": book_id,
+            "comment_text": comment_text
+        }
+
+        return jsonify(comment_data), 201
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 
 @app.route('/ratings', methods=['GET'])
@@ -66,11 +83,9 @@ def get_ratings():
         result = []
         for row in data:
             result.append({
-                'rating_id': row[0],
-                'user_id': row[1],
-                'book_id': row[2],
-                'rating_value': row[3],
-                'timestamp': row[4],
+                'user_id': row[0],
+                'book_id': row[1],
+                'rating_val': row[2],
             })
 
         return jsonify(result)
@@ -81,28 +96,50 @@ def get_ratings():
 
 @app.route('/rate', methods=['POST'])
 def rate_books():
-    data = request.get_json()
-    book_id = data['book_id']
-    user_id = data['user_id']
-    rating = data['rating']
-    datestamp = data['datestamp']
 
-    ratings.setdefault(book_id, []).append(
-        {'user_id': user_id,
-         'rating': rating,
-         'datestamp': datestamp})
-    return jsonify({"message": "Rating added successfully"}), 201
+    try:
+
+        connection = get_db()
+        cursor = connection.cursor()
+
+        data = request.get_json()
+        user_id = data['user_id']
+        book_id = data['book_id']
+        rating_val = data['rating_val']
+
+        query = """insert into ratings (user_id, book_id, rating_val)
+        values (%s, %s, %s)"""
+
+        params = (
+            user_id,
+            book_id,
+            rating_val,
+        )
+
+        cursor.execute(query, params)
+        connection.commit()
+
+        rating_data = {
+            "user_id": data["user_id"],
+            "book_id": data["book_id"],
+            "rating_val": data["rating_val"],
+        }
+
+        return jsonify(rating_data), 201
+
+    except Exception as e:
+        return jsonify({"error": str(e)})
 
 
-@app.route('/average_rating/<book_id>', methods=['GET'])
-def get_average_rating():
+@app.route('/average_rating/<int:book_id>', methods=['GET'])
+def get_average_rating(book_id):
     try:
         connection = get_db()
         cursor = connection.cursor()
 
         # Query to calculate the average rating for the specific book_id
-        query = "SELECT AVG(rating_value) FROM ratings"
-        cursor.execute(query)
+        query = "SELECT AVG(rating_value) FROM ratings WHERE book_id = %s"
+        cursor.execute(query, (book_id,))
 
         average_rating = cursor.fetchone()[0]
 
