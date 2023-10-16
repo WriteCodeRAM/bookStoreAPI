@@ -4,7 +4,6 @@ import mysql.connector
 app = Flask(__name__)
 
 db_config = {
-    # user is first name lowercase
     'user': 'jorge',
     'password': 'password',
     'host': 'test-database.cdlfxfopbica.us-east-2.rds.amazonaws.com',

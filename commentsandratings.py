@@ -1,4 +1,5 @@
 from flask import jsonify, request
+import mysql.connector
 from database import app, get_db
 
 
@@ -18,9 +19,11 @@ def get_comments():
         result = []
         for row in data:
             result.append({
+
                 'user_id': row[0],
                 'book_id': row[1],
                 'comment_text': row[2],
+
             })
 
         return jsonify(result)
@@ -30,7 +33,6 @@ def get_comments():
 
 @app.route('/comment', methods=['POST'])
 def comment():
-
     try:
 
         connection = get_db()
@@ -96,7 +98,6 @@ def get_ratings():
 
 @app.route('/rate', methods=['POST'])
 def rate_books():
-
     try:
 
         connection = get_db()
@@ -131,8 +132,8 @@ def rate_books():
         return jsonify({"error": str(e)})
 
 
-@app.route('/average_rating/<int:book_id>', methods=['GET'])
-def get_average_rating(book_id):
+@app.route('/average_rating/<book_id>', methods=['GET'])
+def get_average_rating():
     try:
         connection = get_db()
         cursor = connection.cursor()
