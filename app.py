@@ -1,4 +1,4 @@
-from flask import Flask, jsonify, request
+from flask import Flask
 from commentsandratings import get_ratings, get_comments, get_average_rating
 from book_details import get_books_ISBN, create_book, get_books_author
 from users import get_users, get_user, create_user
