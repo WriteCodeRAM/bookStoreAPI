@@ -131,14 +131,20 @@ def rate_books():
         return jsonify({"error": str(e)})
 
 
-@app.route('/average_rating/<int:book_id>', methods=['GET'])
-def get_average_rating(book_id):
+@app.route('/average_rating', methods=['GET'])
+def get_average_rating():
     try:
+
+        book_id = request.args.get('book_id')
+        book_id = int(book_id)
+        if book_id is None:
+            return jsonify({"message": "A book ID is required."}), 400
+
         connection = get_db()
         cursor = connection.cursor()
 
         # Query to calculate the average rating for the specific book_id
-        query = "SELECT AVG(rating_value) FROM ratings WHERE book_id = %s"
+        query = "SELECT AVG(rating_val) FROM ratings WHERE book_id = %s"
         cursor.execute(query, (book_id,))
 
         average_rating = cursor.fetchone()[0]
