@@ -1,6 +1,4 @@
 from flask import jsonify, request
-import mysql.connector
-
 from database import app, get_db
 
 users = {}
@@ -9,25 +7,18 @@ users = {}
 @app.route('/users', methods=['GET'])
 def get_users():
     try:
-        # connect to the database
         connection = get_db()
 
-        # cursor to interact with the database
         cursor = connection.cursor()
 
-        # Sprint 2 example GET request
         query = "SELECT * FROM users"
-        # execute will run the query above
         cursor.execute(query)
 
-        # get all rows from the result
         data = cursor.fetchall()
 
-        # close the cursor and connection
         cursor.close()
         connection.close()
 
-        # turn the data into a list of objects
         result = []
         for row in data:
             result.append({
@@ -37,7 +28,6 @@ def get_users():
                 'first name': row[3],
                 'last name': row[4],
                 'email': row[5]
-
             })
 
         return jsonify(result)
@@ -84,3 +74,79 @@ def create_user():
 
     except Exception as e:
         return jsonify({'error': str(e)})
+
+
+@app.route('/users/update/<username>', methods=["PUT", "PATCH"])
+def update_user(username):
+    try:
+        user_data = request.get_json()
+        if not user_data:
+            return jsonify({'error': 'No data provided'})
+
+        password = user_data.get("password")
+        first_name = user_data.get("first name")
+        last_name = user_data.get("last name")
+
+        if not password and not first_name and not last_name:
+            return jsonify({'error': 'No fields provided for update'})
+
+        connection = get_db()
+        cursor = connection.cursor()
+
+        update_fields = []
+        if password:
+            update_fields.append(f"password = '{password}'")
+        if first_name:
+            update_fields.append(f"first_name = '{first_name}'")
+        if last_name:
+            update_fields.append(f"last_name = '{last_name}'")
+
+        set_query = ", ".join(update_fields)
+        query = f"UPDATE users SET {set_query} WHERE username = '{username}'"
+        cursor.execute(query)
+        connection.commit()
+
+        cursor.close()
+        connection.close()
+
+        return jsonify({"message": "User updated successfully"})
+
+    except Exception as e:
+        return jsonify({'error': str(e)})
+
+
+@app.route('/users/<username>/creditcard/new', methods=["POST"])
+def add_credit_card(username):
+    try:
+        user_data = request.get_json()
+
+        credit_card_number = user_data.get("credit_card_number")
+        expiration_date = user_data.get("expiration_date")
+        cvv = user_data.get("cvv")
+
+        if not (credit_card_number and expiration_date and cvv):
+            return jsonify({'error': 'Incomplete credit card details provided'})
+
+        connection = get_db()
+        cursor = connection.cursor()
+
+        cursor.execute("SELECT user_id FROM users WHERE username = %s", (username,))
+        user_id = cursor.fetchone()
+
+        if user_id:
+            query = "INSERT INTO credit_cards (user_id, credit_card_number, expiration_date, cvv) VALUES (%s, %s, %s, %s)"
+            values = (user_id[0], credit_card_number, expiration_date, cvv)
+            cursor.execute(query, values)
+            connection.commit()
+
+            cursor.close()
+            connection.close()
+
+            return jsonify({"message": "Credit card added successfully for the user"})
+
+        else:
+            return jsonify({"error": "User not found"})
+
+    except Exception as e:
+        return jsonify({'error': str(e)})
+

@@ -1,8 +1,8 @@
-from flask import Flask, jsonify, request
+from flask import Flask
 from commentsandratings import get_ratings, get_comments, get_average_rating
 from book_details import get_books_ISBN, create_book, get_books_author
-from users import get_users, get_user, create_user
 from wishlistmanagement import new_wishlist, add_book, delete_book, list_books
+from users import get_users, get_user, create_user, update_user, add_credit_card
 
 app = Flask(__name__)
 
@@ -57,6 +57,14 @@ def find_user(username):
 @app.route('/users/create', methods=['POST'])
 def new_user():
     return create_user()
+
+@app.route('/users/update/<username>', methods=["PUT", "PATCH"])
+def edit_user(username):
+    return update_user(username)
+
+@app.route('/users/<username>/creditcard/new', methods=["POST"])
+def new_credit_card(username):
+    return add_credit_card(username)
 
 
 @app.route('/wishlist/<user_id>/<wishlist_name>/<book_id>', methods=['POST'])
