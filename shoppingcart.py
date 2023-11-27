@@ -10,72 +10,135 @@ cart_items = {
     ],
     "user456": [
         {"book_id": 3, "subtotal": 15.0},
-    ],
-}
-
-@app.route('/api/users/<user_id>/cart/subtotal', methods=['GET'])
-def get_cart_subtotal(user_id):
-    if user_id in cart_items:
-        subtotal = sum(item["subtotal"] for item in cart_items[user_id])
-        return jsonify({"userId": user_id, "subtotal": subtotal})
-    else:
-        return jsonify({"error": "User not found"}), 404
-
-if __name__ == '__main__':
-    app.run(debug=True)
-
-@app.route('/api/users/<user_id>/cart/add', methods=['POST'])
-def add_to_cart(user_id):
-    data = request.json
-    book_id = data.get("book_id")
-
-    if user_id not in cart_items:
-        cart_items[user_id] = []
-
-    # Simulate adding the book to the cart (replace with actual logic)
-    cart_items[user_id].append({"book_id": book_id, "subtotal": 0.0})
-
-    return jsonify({"message": "Book added to cart"})
-
-if __name__ == '__main__':
-    app.run(debug=True)
-
-    {
-    "userId": 123,
-    "books": [
-        {
-            "bookId": 1,
-            "title": "Book Title 1",
-            "author": "Author 1",
-            "price": 19.99
-        },
-        {
-            "bookId": 2,
-            "title": "Book Title 2",
-            "author": "Author 2",
-            "price": 14.99
-        },
-        {
-            "bookId": 3,
-            "title": "Book Title 3",
-            "author": "Author 3",
-            "price": 29.99
-        }
     ]
 }
 
-def remove_book_from_cart():
-    user_id = request.args.get('user_id')
-    book_id = request.args.get('book_id')
+#Retrieve subtotal 
+def get_subtotal(UserId):
+    try:    
 
-    if user_id is None or book_id is None:
-        return jsonify({"error": "User Id and Book Id are required"}), 400
+        # connect to the database
+        connection = get_db()
 
-    if user_id in shopping_cart and book_id in shopping_cart[user_id]:
-        shopping_cart[user_id].remove(book_id)
-        return "", 204  # No content, book removed successfully
-    else:
-        return jsonify({"error": "Book not found in user's shopping cart"}), 404
+        # cursor to interact with the database
+        cursor = connection.cursor()
 
-if __name__ == '__main__':
-    app.run(debug=True)
+        # Sprint 2 example GET request
+        query = f"SELECT * FROM ShoppingCart WHERE UserId = {UserId}"
+        # execute will run the query above
+        cursor.execute(query)
+
+        # get all rows from the result
+        data = cursor.fetchall()
+
+        print(data)
+
+        # close the cursor and connection
+        cursor.close()
+        connection.close()
+
+        subtotal = sum(float(item[2]) for item in data)
+
+        return jsonify({"subtotal": subtotal})
+
+    except Exception as e:
+        return jsonify({"error": str(e)})
+
+    
+#add book
+def add_to_cart(BookID, UserId, Subtotal):
+    try:    
+        # connect to the database
+        connection = get_db()
+
+        # cursor to interact with the database
+        cursor = connection.cursor()
+
+        # Sprint 2 example INSERT request
+        query = f"INSERT INTO ShoppingCart (UserId, BookID, Subtotal) VALUES({UserId}, {BookID}, {Subtotal})"
+        
+        # execute will run the query above
+        cursor.execute(query)
+
+        # commit the changes to the database
+        connection.commit()
+
+        # close the cursor and connection
+        cursor.close()
+        connection.close()
+
+        return jsonify({"success": True, "message": "Book added to the cart successfully"})
+
+    except Exception as e:
+        return jsonify({"error": str(e)})
+        
+#Retrieve Book List
+def get_Book_List(UserId):
+    try:    
+        # connect to the database
+        connection = get_db()
+
+        # cursor to interact with the database
+        cursor = connection.cursor()
+
+        # Sprint 2 example GET request with JOIN
+        query = f"""
+            SELECT ShoppingCart.BookID, ShoppingCart.UserId, Books.book_name
+            FROM ShoppingCart
+            JOIN Books ON ShoppingCart.BookID = Books.book_id
+            WHERE ShoppingCart.UserId = {UserId}
+        """
+
+        # execute will run the query above
+        cursor.execute(query)
+
+        # get all rows from the result
+        data = cursor.fetchall()
+
+        # close the cursor and connection
+        cursor.close()
+        connection.close()
+
+        # turn the data into a list of objects
+        results = []
+
+        # for row in data:
+        #     results.append(
+        #         {
+        #             "Book_ID": row[0],
+        #             "User_ID": row[1],
+        #             "Book_Name": row[2],
+        #         }
+        #     )
+
+        return jsonify(data)
+        
+    except Exception as e:
+        return jsonify({"error": str(e)})
+
+#remove_book
+def remove_book_from_cart(Book_ID, UserID):
+    try:    
+        # connect to the database
+        connection = get_db()
+
+        # cursor to interact with the database
+        cursor = connection.cursor()
+
+        # Sprint 2 example DELETE request
+        query = f"DELETE FROM ShoppingCart WHERE BookID = {Book_ID} AND UserId = {UserID}"
+        
+        # execute will run the query above
+        cursor.execute(query)
+
+        # commit the changes to the database
+        connection.commit()
+
+        # close the cursor and connection
+        cursor.close()
+        connection.close()
+
+        return jsonify({"success": True, "message": "Book removed from the cart successfully"})
+    
+    except Exception as e:
+        return jsonify({"error": str(e)})
